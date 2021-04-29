@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+
+  server:
+    container_name: server-findex
+    build: ./server
+    restart: always
+    ports:
+      - "8000:8000"
+
+  client:
+    container_name: client-findex
+    build: 
+      context: ./client
+    stdin_open: true
+    restart: always
+    volumes:
+      - "./client:/App"
+      - "./client/node_modules:/App/node_modules"
+    ports:
+      - "3000:3000"
+    depends_on:
+      - "server"
