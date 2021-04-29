@@ -2,7 +2,7 @@
 
 from nltk.stem import WordNetLemmatizer
 from collections import OrderedDict
-from src.Preprocessing import Porter
+from Preprocessing import Porter
 from collections import defaultdict
 from nltk.stem.porter import *
 import re

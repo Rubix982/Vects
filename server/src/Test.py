@@ -1,5 +1,5 @@
 from BooleanRetrievalModel import BooleanRetrievalModel
-from Preprocessing import IndexPreprocessing, Preprocessing
+from Preprocessing import IndexPreprocessing, Preprocessing, TermFrequencyIndexer, DocumentInverseFrequency, TFBindIDF
 
 # # TOTAL WORDS GENERATION
 # preprocess = Preprocessing()
@@ -38,41 +38,50 @@ query_result_checks = [
         '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50']
 ]
 
-print("CODE LEFT TO WRITE FOR FALSE POSITIVES\n\n\n")
+# tf = TermFrequencyIndexer()
+# tf.IndexShortStories()
 
-for idx, query in enumerate(gold_standard_queries):
+# idf = DocumentInverseFrequency()
+# idf.BuildInverseDocumentFrequency()
 
-    try:
-        if '/' in query:
-            query_results = model.ProximityQuery(query)
-        else:
-            query_results = model.ComplexBooleanQuery(query)
+tf_idf = TFBindIDF()
+tf_idf.BuildTFAndIDF()
 
-        if type(query_results[0]) == int:
-            query_results = [str(results) for results in query_results]
+# print("CODE LEFT TO WRITE FOR FALSE POSITIVES\n\n\n")
 
-        correct, not_found_docs, false_positives = True, [], []
-        for query_check in query_result_checks[idx]:
-            if query_check not in query_results:
-                correct = False
-                not_found_docs.append(query_check)
+# for idx, query in enumerate(gold_standard_queries):
 
-        # BUGGY!
-        # for false_positive_check in query_result_checks:
-        #     for check in false_positive_check:
-        #         if check not in query_results:
-        #             false_positives.append(check)
+#     try:
+#         if '/' in query:
+#             query_results = model.ProximityQuery(query)
+#         else:
+#             query_results = model.ComplexBooleanQuery(query)
 
-        print(f"Query: \"{query}\",\nResult: ", end="")
+#         if type(query_results[0]) == int:
+#             query_results = [str(results) for results in query_results]
 
-        if correct:
-            print(f"\"True\"\n")
+#         correct, not_found_docs, false_positives = True, [], []
+#         for query_check in query_result_checks[idx]:
+#             if query_check not in query_results:
+#                 correct = False
+#                 not_found_docs.append(query_check)
 
-            # if len(false_positives) != 0:
-            #     print(f"False positive detected as the following, {false_positives}")
-        else:
-            print(f"\"False\"\n")
-            print(f"Docs not found were, {not_found_docs}")
+#         # BUGGY!
+#         # for false_positive_check in query_result_checks:
+#         #     for check in false_positive_check:
+#         #         if check not in query_results:
+#         #             false_positives.append(check)
 
-    except IndexError as error:
-        print(f"Error thrown due to query: {query}. Error is, \"{error}\"")
+#         print(f"Query: \"{query}\",\nResult: ", end="")
+
+#         if correct:
+#             print(f"\"True\"\n")
+
+#             # if len(false_positives) != 0:
+#             #     print(f"False positive detected as the following, {false_positives}")
+#         else:
+#             print(f"\"False\"\n")
+#             print(f"Docs not found were, {not_found_docs}")
+
+#     except IndexError as error:
+#         print(f"Error thrown due to query: {query}. Error is, \"{error}\"")
