@@ -141,7 +141,6 @@ class BooleanRetrievalModel():
 
     def SimpleBooleanQuery(self, query: str):
 
-
         # Preprocess and convert the tokens to their respective IDs
         __tokens_to_id = self.TokensToId(
             self.PreprocessQuery(query), self.GetTokenDictionary(self.id_token_dict_path))
@@ -220,9 +219,6 @@ class BooleanRetrievalModel():
         # No operators involved! Easy
         if len(final_phrases) == 1:
             return self.SimpleBooleanQuery(final_phrases[0])
-
-        # print(final_phrases, operators)
-        # return [1, 2, 3]
 
         for idx, phrase in enumerate(final_phrases):
 

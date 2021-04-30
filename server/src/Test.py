@@ -1,6 +1,8 @@
 from BooleanRetrievalModel import BooleanRetrievalModel
-from Preprocessing import IndexPreprocessing, Preprocessing, TermFrequencyIndexer, DocumentInverseFrequency, TFBindIDF
+from Preprocessing import IndexPreprocessing, Preprocessing, AuxPreprocessing
+from VectorSpaceModel import VectorSpaceModel, TermFrequencyIndexer, DocumentInverseFrequency, TFBindIDF
 
+### FOR BOOLEAN PROCESSING
 # # TOTAL WORDS GENERATION
 # preprocess = Preprocessing()
 # preprocess.data_load_and_save()
@@ -10,7 +12,7 @@ from Preprocessing import IndexPreprocessing, Preprocessing, TermFrequencyIndexe
 # preprocess.process_data_through_pipelines()
 # preprocess.get_saved_normalized_words()
 
-model = BooleanRetrievalModel()
+# model = BooleanRetrievalModel()
 
 gold_standard_queries = ['beard',
                          'passenger',
@@ -38,50 +40,47 @@ query_result_checks = [
         '27', '28', '29', '30', '31', '32', '33', '34', '35', '36', '37', '39', '40', '41', '42', '44', '45', '46', '47', '48', '49', '50']
 ]
 
+test_query_unpreprocessed = 'chimney is tumbling down, the steps at the front-door are rotting away and overgrown with grass, and there are only traces left of the stucco. The front of the lodge faces the hospital; at the back it looks out into the open country, from which it is separated by the grey hospital fence with nails on it. These nails, with their points upwards, and the fence, and the lodge itself, have that peculiar, desolate, God-forsaken look which is only found in our hospital and prison buildings.'
+
+test_query_preprocessed = 'dissolut furtiv moistur encount sunlight marbl slab dug sunni acacia acacia acacia acacia acacia acacia acacia acacia acacia acacia acacia acacia acacia acacia acacia'
+
 # tf = TermFrequencyIndexer()
 # tf.IndexShortStories()
 
 # idf = DocumentInverseFrequency()
 # idf.BuildInverseDocumentFrequency()
 
-tf_idf = TFBindIDF()
-tf_idf.BuildTFAndIDF()
+# tf_idf = TFBindIDF()
+# tf_idf.BuildTFAndIDF()
+
+VSM = VectorSpaceModel()
 
 # print("CODE LEFT TO WRITE FOR FALSE POSITIVES\n\n\n")
 
-# for idx, query in enumerate(gold_standard_queries):
+for idx, query in enumerate(gold_standard_queries):
 
-#     try:
-#         if '/' in query:
-#             query_results = model.ProximityQuery(query)
-#         else:
-#             query_results = model.ComplexBooleanQuery(query)
+    try:
+        if '/' in query:
+            continue
+        else:
+            query_results = VSM.ComplexQuery(query)
 
-#         if type(query_results[0]) == int:
-#             query_results = [str(results) for results in query_results]
+        query_results = [key[2:] for key in query_results.keys()]
 
-#         correct, not_found_docs, false_positives = True, [], []
-#         for query_check in query_result_checks[idx]:
-#             if query_check not in query_results:
-#                 correct = False
-#                 not_found_docs.append(query_check)
+        correct, not_found_docs, false_positives = True, [], []
+        for query_check in query_result_checks[idx]:
+            if query_check not in query_results:
+                correct = False
+                not_found_docs.append(query_check)
 
-#         # BUGGY!
-#         # for false_positive_check in query_result_checks:
-#         #     for check in false_positive_check:
-#         #         if check not in query_results:
-#         #             false_positives.append(check)
+        print(f"Query: \"{query}\",\nResult: ", end="")
 
-#         print(f"Query: \"{query}\",\nResult: ", end="")
+        if correct:
+            print(f"\"True\"\n")
 
-#         if correct:
-#             print(f"\"True\"\n")
+        else:
+            print(f"\"False\"")
+            print(f"Docs not found were, {not_found_docs}\n")
 
-#             # if len(false_positives) != 0:
-#             #     print(f"False positive detected as the following, {false_positives}")
-#         else:
-#             print(f"\"False\"\n")
-#             print(f"Docs not found were, {not_found_docs}")
-
-#     except IndexError as error:
-#         print(f"Error thrown due to query: {query}. Error is, \"{error}\"")
+    except IndexError as error:
+        print(f"Error thrown due to query: {query}. Error is, \"{error}\"")

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+from nltk.stem import WordNetLemmatizer
+from nltk.stem.porter import *
 import multiprocessing as mp
 import pandas as pd
 import numpy as np
@@ -38,108 +40,11 @@ class PositionalIndex():
         self.document_listing_positions = ''
 
 
-class TermFrequencyIndexer():
-
-    short_stories_path = os.path.abspath('.') + "/dist/ShortStories"
-
-    def __init__(self, list_of_filenames: list = os.listdir(short_stories_path)):
-        self.list_of_filenames = list_of_filenames
-
-    def IndexShortStories(self):
-
-        df = pd.DataFrame(
-            columns=['word'] + [f'df{i}' for i in range(1, 50 + 1)])
-
-        count_dict = {}
-        for filename in self.list_of_filenames:
-            with open(self.short_stories_path + "/" + filename, mode='r') as file:
-                data = str(file.read()).split(' ')
-                index = filename.split('.')[0]
-                for token in data:
-                    if token not in count_dict:
-                        count_dict[token] = {}
-                        count_dict[token][index] = 1
-                    else:
-                        if index not in count_dict[token]:
-                            count_dict[token][index] = 0
-                        count_dict[token][index] += 1
-
-        for key, _ in count_dict.items():
-            df = df.append(pd.DataFrame(
-                [[key] + ([0] * (50))], columns=['word'] + [f'df{i}' for i in range(1, 50 + 1)]), ignore_index=True)
-
-        for index, (key, value) in enumerate(count_dict.items()):
-
-            for doc, count in value.items():
-
-                df.at[index, f'df{doc}'] = count
-
-        df.to_csv("./dist/tf.csv")
-
-
-class DocumentInverseFrequency():
-
-    short_stories_len = os.listdir(os.path.abspath('.') + "/dist/ShortStories")
-
-    def __init__(self, path_to_tf_csv: str = os.path.abspath('.') + "/dist/tf.csv"):
-        self.path_to_tf_csv = path_to_tf_csv
-        self.document_columns = [f'df{i}' for i in range(1, 50 + 1)]
-        self.path_to_idf_csv = './dist/idf.csv'
-
-    def BuildInverseDocumentFrequency(self):
-
-        tf_df = pd.read_csv(self.path_to_tf_csv).reset_index(drop=True)
-
-        del tf_df['Unnamed: 0']
-
-        tf_df['idf'] = pd.DataFrame(
-            [0] * len(tf_df), columns=['idf'], dtype=np.float32)
-
-        for i in range(0, len(tf_df)):
-            df_i = 0
-            for document in self.document_columns:
-                if tf_df.iloc[i][document] != 0:
-                    df_i += 1
-
-            tf_df.at[i, 'idf'] = np.float32(
-                math.log(np.float32(len(self.short_stories_len)/df_i)))
-
-        tf_df.to_csv(self.path_to_idf_csv)
-
-
-class TFBindIDF():
-
-    def __init__(self):
-        self.idf_doc_path = './dist/idf.csv'
-        self.tf_idf_save_pd_path = './dist/tf-idf.csv'
-        self.document_names = [f"df{i}" for i in range(1, 50 + 1)]
-
-    def BuildTFAndIDF(self):
-
-        df = pd.DataFrame(
-            columns=self.document_names)
-
-        tf_idf=pd.read_csv(self.idf_doc_path).reset_index(drop=True)
-
-        for index in range(0, len(tf_idf)):
-            idf_value=list(tf_idf.iloc[index, 2:53])[-1]
-            df_values=list(tf_idf.iloc[index, 2:52])
-
-            new_tf_id=[]
-            for i in range(0, len(df_values)):
-                new_tf_id.append(df_values[i] * idf_value)
-
-            new_tf_id=list(tf_idf.iloc[index, 1:2]) + new_tf_id + [idf_value]
-
-            df=df.append(pd.DataFrame([new_tf_id], columns=[
-                         'word'] + self.document_names + ['idf']), ignore_index=True)
-
-        df.to_csv(self.tf_idf_save_pd_path)
-
 class AuxPreprocessing(object):
 
     def __init__(self):
-        pass
+        self.wordnet_lemmatizer = WordNetLemmatizer()
+        self.stemmer = PorterStemmer()
 
     @ staticmethod
     def Tokenizer(line: str,
@@ -147,10 +52,10 @@ class AuxPreprocessing(object):
                   stop_words_list: list):
 
         # TOKENIZATION - removes punctuation!
-        tokens=nltk_tokenizer.tokenize(line)
+        tokens = nltk_tokenizer.tokenize(line)
 
         # CASE FOLDING
-        tokens=[token.lower() for token in tokens]
+        tokens = [token.lower() for token in tokens]
 
         # STOP WORDS REMOVAL
         for token in tokens:
@@ -159,16 +64,45 @@ class AuxPreprocessing(object):
 
         return tokens
 
-    @ staticmethod
+    @staticmethod
     def Stemmer(tokens: list,
                 stemming_func: PorterStemmer):
 
         return [stemming_func.stem(token) for token in tokens]
 
-    @ staticmethod
+    @staticmethod
     def Lemmatize_func(tokens: list,
                        lemmatizer: WordNetLemmatizer):
         return [lemmatizer.lemmatize(token) for token in tokens]
+
+    def PreprocessQuery(self, query: str):
+        __tokens = query.split(' ')
+
+        # Very annoying UTF 8 characters
+        very_annoying_utf_8_characters = [
+            '\n', '\r', '\"', '\'', '.', '’', ',', '“' '”', ';', '“', '!', '”', '”', '“', '-']
+
+        for idx, _ in enumerate(__tokens):
+            for remove_character in very_annoying_utf_8_characters:
+                __tokens[idx] = __tokens[idx].replace(remove_character, ' ')
+                __tokens[idx] = re.sub(' +', ' ', __tokens[idx].strip())
+
+        __tokens = ' '.join([entry for entry in __tokens if entry !=
+                             '' and not entry.isnumeric()])
+
+        __tokens = [token.lower() for token in __tokens.split(' ')]
+
+        # Custom method
+        # STEMMING ->> LEMMATIZATION
+        # __tokens = [self.wordnet_lemmatizer.lemmatize(
+        # Porter.CustomPorterAlgorithm(token)) for token in __tokens]
+
+        # Using Porter's algorithm
+        # STEMMING ->> LEMMATIZATION
+        __tokens = [self.wordnet_lemmatizer.lemmatize(
+            self.stemmer.stem(token)) for token in __tokens]
+
+        return __tokens
 
 
 class Porter(object):
@@ -180,39 +114,39 @@ class Porter(object):
     def CustomPorterAlgorithm(input_str: str):
 
         # PREPROCESSING
-        input_str=input_str.lower()
+        input_str = input_str.lower()
 
         # VARIABLE SECTION
         '''
         USED IN STEP 1A
         '''
-        from_str=['sess', 'ies', 'ss', 's']
-        to_str=['ss', 'i', 'ss', '']
+        from_str = ['sess', 'ies', 'ss', 's']
+        to_str = ['ss', 'i', 'ss', '']
 
         '''
         USED IN STEP 1B
         '''
-        vowel_list=['a', 'e', 'i', 'o', 'u']
+        vowel_list = ['a', 'e', 'i', 'o', 'u']
 
         '''
         USED IN STEP 2
         '''
-        from_suffix_consideration=['ational', 'tional', 'enci', 'izer', 'abli', 'alli', 'entli', 'ousli', 'ization',
+        from_suffix_consideration = ['ational', 'tional', 'enci', 'izer', 'abli', 'alli', 'entli', 'ousli', 'ization',
                                      'ation', 'ator', 'alism', 'iveness', 'fulness', 'ousness', 'aliti', 'ivitti', 'biliti', 'anci', 'eli']
-        to_suffix_consideration=['ate', 'tion', 'ence', 'ize', 'able', 'al', 'ent', 'ous',
+        to_suffix_consideration = ['ate', 'tion', 'ence', 'ize', 'able', 'al', 'ent', 'ous',
                                    'ize', 'ate', 'ate', 'al', 'ive', 'ful', 'ous', 'al', 'ive', 'ble', 'ance', 'e']
 
         '''
         USED IN STEP 3
         '''
-        from_ication_suffix=['icate', 'ative',
+        from_ication_suffix = ['icate', 'ative',
                                'alize', 'iciti', 'ical', 'ful', 'ness']
-        to_ication_suffix=['ic', '', 'al', 'ic', 'ic', '', '']
+        to_ication_suffix = ['ic', '', 'al', 'ic', 'ic', '', '']
 
         '''
         USED IN STEP 4
         '''
-        from_one_plus_suffix_consider=['al', 'ance', 'ence', 'er', 'ic', 'able', 'ible',
+        from_one_plus_suffix_consider = ['al', 'ance', 'ence', 'er', 'ic', 'able', 'ible',
                                          'ant', 'ement', 'ment', 'ent', 'ion', 'ou', 'ism', 'ate', 'iti', 'ous', 'ive', 'ize']
 
         # 1st STEP SECTION
@@ -226,11 +160,11 @@ class Porter(object):
         4. S -> Remove
         '''
 
-        zipped_list=zip(from_str, to_str)
+        zipped_list = zip(from_str, to_str)
 
         for item in zipped_list:
             if input_str.endswith(item[0]):
-                input_str=input_str[0: len(
+                input_str = input_str[0: len(
                     input_str) - len(item[0])] + item[1]
 
         '''
@@ -242,13 +176,13 @@ class Porter(object):
         '''
         if len(input_str) > 3:
             if input_str.endswith('eed'):
-                input_str=input_str[0: len(input_str) - len('eed')] + 'ee'
+                input_str = input_str[0: len(input_str) - len('eed')] + 'ee'
 
             if input_str.endswith(('ed')) and input_str[-3] in vowel_list:
-                input_str=input_str[0: len(input_str) - len('ed')] + ''
+                input_str = input_str[0: len(input_str) - len('ed')] + ''
 
             if input_str.endswith(('ing')) and input_str[-3] in vowel_list:
-                input_str=input_str[0: len(input_str) - len('ing')] + ''
+                input_str = input_str[0: len(input_str) - len('ing')] + ''
 
         '''
         Step 1C
@@ -257,7 +191,7 @@ class Porter(object):
         '''
         if len(input_str) > 2:
             if input_str.endswith('y') and input_str[-2] in vowel_list:
-                input_str=input_str[0: len(input_str) - len('y')] + 'i'
+                input_str = input_str[0: len(input_str) - len('y')] + 'i'
 
         # 2nd STEP SECTION
 
@@ -286,13 +220,13 @@ class Porter(object):
         20. (m>0)ELI -> E
         '''
 
-        zipped_suffix_list=zip(from_suffix_consideration,
+        zipped_suffix_list = zip(from_suffix_consideration,
                                  to_suffix_consideration)
 
         for suffix in zipped_suffix_list:
             if len(input_str) > len(suffix[0]) + 1:
                 if input_str.endswith(suffix[0]):
-                    input_str=input_str[0: len(
+                    input_str = input_str[0: len(
                         input_str) - len(suffix[0])] + suffix[1]
 
         # 3rd STEP SECTION
@@ -309,13 +243,13 @@ class Porter(object):
         7. (m>0)NESS -> ''
         '''
 
-        zipped_ication_suffix=zip(from_ication_suffix,
+        zipped_ication_suffix = zip(from_ication_suffix,
                                     to_ication_suffix)
 
         for suffix in zipped_ication_suffix:
             if len(input_str) > len(suffix[0]) + 1:
                 if input_str.endswith(suffix[0]):
-                    input_str=input_str[0: len(
+                    input_str = input_str[0: len(
                         input_str) - len(suffix[0])] + suffix[1]
 
         # 4th STEP SECTION
@@ -352,11 +286,11 @@ class Porter(object):
 
                 if suffix == 'ion':
                     if (input_str[-4] == 'y' or input_str[-4] == 's') and len(input_str) > 4:
-                        input_str=input_str[0: len(
+                        input_str = input_str[0: len(
                             input_str) - len(suffix)]
                         continue
                 if input_str.endswith(suffix):
-                    input_str=input_str[0: len(
+                    input_str = input_str[0: len(
                         input_str) - len(suffix)]
 
         return input_str
@@ -377,32 +311,32 @@ class Preprocessing():
         4. Reverse back the string
         5. Append the `data/` folder path
         '''
-        self.reversed_abspath=os.path.abspath('.')
+        self.reversed_abspath = os.path.abspath('.')
 
         # Data folder path
-        self.data_path=self.reversed_abspath + "/data"
+        self.data_path = self.reversed_abspath + "/data"
 
         # Dist folder path
-        self.dist_path=self.reversed_abspath + "/dist"
+        self.dist_path = self.reversed_abspath + "/dist"
 
         # To store the retrieved file paths
-        self.file_paths=[]
+        self.file_paths = []
 
         # stop word list
-        self.stop_words_list=[]
+        self.stop_words_list = []
 
         # Total words
-        self.total_words=[]
+        self.total_words = []
 
         # PORTER STEMMER
-        self.porter_stemmer=PorterStemmer()
+        self.porter_stemmer = PorterStemmer()
 
         # NLTK - Regex Tokenizer, for removing punctuation
-        self.nltk_tokenizer=nltk.RegexpTokenizer(r"\w+")
+        self.nltk_tokenizer = nltk.RegexpTokenizer(r"\w+")
 
         # LEMMATIZATION
         nltk.download('wordnet')
-        self.wordnet_lemmatizer=WordNetLemmatizer()
+        self.wordnet_lemmatizer = WordNetLemmatizer()
 
     # Get file paths
     def store_file_paths(self):
@@ -420,8 +354,8 @@ class Preprocessing():
             for line in file:
 
                 # Removing possible misc UTf-8 characters
-                line=line.strip('\n')
-                line=line.strip(' ')
+                line = line.strip('\n')
+                line = line.strip(' ')
 
                 # Appending to the `stop_words` list
                 self.stop_words_list.append(line)
@@ -457,7 +391,7 @@ class Preprocessing():
         ['yes', 'said', 'ivan', 'abramitch', 'looking', 'pensively', 'out',
         'of', 'window', 'it', 'is', 'never', 'too', 'late', 'marry']
         '''
-        tokens=AuxPreprocessing.Tokenizer(
+        tokens = AuxPreprocessing.Tokenizer(
             line, self.nltk_tokenizer, self.stop_words_list)
 
         '''
@@ -467,7 +401,7 @@ class Preprocessing():
         >>> ['ye', 'said', 'ivan', 'abramitch', 'look', 'pensiv', 'out', 'of',
         'window', 'it', 'is', 'never', 'too', 'late', 'to', 'marri']
         '''
-        tokens=AuxPreprocessing.Stemmer(tokens, porter_stemmer_to_stem)
+        tokens = AuxPreprocessing.Stemmer(tokens, porter_stemmer_to_stem)
 
         '''
         # LEMMATIZATION
@@ -476,7 +410,7 @@ class Preprocessing():
         >>> ['ye', 'said', 'ivan', 'abramitch', 'look', 'pensiv', 'out', 'of',
         'window', 'it', 'is', 'never', 'too', 'late', 'to', 'marri']
         '''
-        tokens=AuxPreprocessing.Lemmatize_func(
+        tokens = AuxPreprocessing.Lemmatize_func(
             tokens, wordnet_lemmatizer_for_lemma)
 
         '''
@@ -500,7 +434,7 @@ class Preprocessing():
             for line in file:
 
                 # Simply extract the tokens
-                tokens=self.pipeline(
+                tokens = self.pipeline(
                     line, self.porter_stemmer, self.wordnet_lemmatizer)
 
                 # Append the tokens in a final list
@@ -559,92 +493,92 @@ class Preprocessing():
 class IndexPreprocessing():
 
     def __init__(self):
-        self.reversed_abspath=os.path.abspath('.')
+        self.reversed_abspath = os.path.abspath('.')
 
         # Data folder path
-        self.data_path=self.reversed_abspath + "/data"
+        self.data_path = self.reversed_abspath + "/data"
 
         # Dist folder path
-        self.dist_path=self.reversed_abspath + "/dist"
+        self.dist_path = self.reversed_abspath + "/dist"
 
         # To store the retrieved file paths
-        self.file_paths=[]
+        self.file_paths = []
 
         # stop word list
-        self.stop_words_list=[]
+        self.stop_words_list = []
 
         # stop word list
-        self.unique_word_counter=-500
+        self.unique_word_counter = -500
 
         # NLTK - Regex Tokenizer, for removing punctuation
-        self.nltk_tokenizer=nltk.RegexpTokenizer(r"\w+")
+        self.nltk_tokenizer = nltk.RegexpTokenizer(r"\w+")
 
         # LEMMATIZATION
-        self.wordnet_lemmatizer=WordNetLemmatizer()
+        self.wordnet_lemmatizer = WordNetLemmatizer()
 
         # Very annoying UTF 8 characters
-        self.very_annoying_utf_8_characters=[
+        self.very_annoying_utf_8_characters = [
             '\n', '\r', '\"', '\'', '.', '’', ',', '“' '”', ';', '“', '!', '”', '”', '“', '-']
 
         # path_name_list
-        self.path_name_list=[]
+        self.path_name_list = []
 
         # Stemmer
-        self.stemmer=PorterStemmer()
+        self.stemmer = PorterStemmer()
 
         # patlib.Path results
-        pathlib_walked_path=pathlib.Path(self.data_path).rglob('*.txt')
+        pathlib_walked_path = pathlib.Path(self.data_path).rglob('*.txt')
 
         # waste generation
         next(pathlib_walked_path)
 
         # path_name_parent
-        path_name_parent, path_name_seen='', False
+        path_name_parent, path_name_seen = '', False
 
-        path_name_file_extension=next(pathlib_walked_path).name.split('.')[1]
+        path_name_file_extension = next(pathlib_walked_path).name.split('.')[1]
 
         # Get the file paths for each of the short stories
         for path in pathlib_walked_path:
 
             if not path_name_seen:
-                path_name_seen=True
-                path_name_parent=path.parent
+                path_name_seen = True
+                path_name_parent = path.parent
 
             self.path_name_list.append(int(str(path.name).split('.')[0]))
 
-        self.path_name_list=[
+        self.path_name_list = [
             f"{str(entry)}.{path_name_file_extension}" for entry in sorted(self.path_name_list)]
 
-        self.file_paths=[
+        self.file_paths = [
             f"{str(path_name_parent)}/{str(path_name_entry)}" for path_name_entry in self.path_name_list]
 
     def process_data_through_pipelines(self):
 
-        short_stories_path=f"{self.dist_path}/ShortStories"
+        short_stories_path = f"{self.dist_path}/ShortStories"
 
         if not os.path.exists(short_stories_path):
             os.makedirs(short_stories_path)
 
         for path in self.file_paths:
 
-            tokens=[]
+            tokens = []
 
             with open(path) as file:
 
                 # for line in file:
-                data=file.readlines()
+                data = file.readlines()
 
                 for idx, _ in enumerate(data):
                     for remove_character in self.very_annoying_utf_8_characters:
-                        data[idx]=data[idx].replace(remove_character, ' ')
-                        data[idx]=re.sub(' +', ' ', data[idx].strip())
+                        data[idx] = data[idx].replace(remove_character, ' ')
+                        data[idx] = re.sub(' +', ' ', data[idx].strip())
 
-                data=' '.join([entry for entry in data if entry !=
+                data = ' '.join([entry for entry in data if entry !=
                                  '' and not entry.isnumeric()])
-                tokens=[token.lower() for token in data.split(' ')]
+                tokens = [token.lower() for token in data.split(' ')]
 
                 # STEMMING ->> LEMMATIZATION
-                tokens=[self.wordnet_lemmatizer.lemmatize(
+                tokens = [self.wordnet_lemmatizer.lemmatize(
                     self.stemmer.stem(token)) for token in tokens]
 
                 with open(f"{short_stories_path}/{path.split('/')[-1].split('.')[0]}.txt", mode='w') as file:
@@ -652,17 +586,17 @@ class IndexPreprocessing():
 
     def generate_positional_index(self, str_to_build_positional: str, positional_index: PositionalIndex):
 
-        short_stories_path=[]
-        total_positions=''
+        short_stories_path = []
+        total_positions = ''
         for path in self.file_paths:
             short_stories_path.append(path.replace('data', 'dist'))
 
         for file_path_idx, path in enumerate(short_stories_path):
 
-            positions=''
+            positions = ''
 
             with open(path) as file:
-                tokens=file.readlines()[0].split(' ')
+                tokens = file.readlines()[0].split(' ')
 
                 # TODO - I haven't tested how accurately this works
                 for idx, token in enumerate(tokens):
@@ -670,24 +604,24 @@ class IndexPreprocessing():
                         positions += f"{idx},"
 
             if positions != '':
-                positions=f"{file_path_idx + 1},{positions[0:-1]};"
-                total_positions=total_positions + positions
+                positions = f"{file_path_idx + 1},{positions[0:-1]};"
+                total_positions = total_positions + positions
 
-        positional_index.document_listing_positions=total_positions
+        positional_index.document_listing_positions = total_positions
 
     def for_line_store_file(self, line: str):
 
         # Preprocessing / cleaning
-        entry=line.strip('\n').split(',')[0:2]
+        entry = line.strip('\n').split(',')[0:2]
 
         # generate positional index
-        positional_index=PositionalIndex(
+        positional_index = PositionalIndex(
             unique_hash=f"{entry[0]}")
 
         # Get the postiings from the parse
         self.generate_positional_index(entry[1], positional_index)
 
-        content_dump=positional_index.__dict__
+        content_dump = positional_index.__dict__
 
         if content_dump['document_listing_positions'] == ['']:
             return
@@ -695,9 +629,9 @@ class IndexPreprocessing():
         # opening file to save
         with open(f"{self.dist_path}/positional.txt", mode='a') as positional_file, open(f"{self.dist_path}/inverted.txt", 'a') as inverted_file:
 
-            final_inverted_string=''
+            final_inverted_string = ''
             for line in content_dump['document_listing_positions'].split(';'):
-                tokens=line.split(',')
+                tokens = line.split(',')
                 if line == '' or tokens == ['']:
                     continue
                 final_inverted_string += f"{tokens[0]},{len(tokens)-1};"
@@ -712,7 +646,7 @@ class IndexPreprocessing():
 
     def get_saved_normalized_words(self):
 
-        total_words_list=[]
+        total_words_list = []
         with open(f"{self.dist_path}/Total-Words.csv") as file:
             for line in file:
                 total_words_list.append(line)
