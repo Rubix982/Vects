@@ -155,7 +155,8 @@ class DocumentInverseFrequency():
 
         Raises:
             None: No exception
-        ''''
+        '''
+
         self.path_to_tf_csv = path_to_tf_csv
         self.document_columns = [f'df{i}' for i in range(1, 50 + 1)]
         self.path_to_idf_csv = './dist/idf.csv'
@@ -195,12 +196,13 @@ class DocumentInverseFrequency():
 
 
 class TFBindIDF():
-        '''
-        This class is responsible for building the
-        ../dist/tf-idf.csv file. The file 'tf-idf.csv' contains
-        the sparse matrix of the term frequencies
-        multiplied by the inverse document frequencies from 'idf.csv'
-        '''
+
+    '''
+    This class is responsible for building the
+    ../dist/tf-idf.csv file. The file 'tf-idf.csv' contains
+    the sparse matrix of the term frequencies
+    multiplied by the inverse document frequencies from 'idf.csv'
+    '''
 
     def __init__(self):
 
@@ -413,16 +415,16 @@ class VectorSpaceModel():
                 query_words[key] = value
 
         # Create a list to store all the values
-        total_sum = []
+        total_sum = 0
         
         # Traversing through the query dictionary
         for key, value in query_words.items():
 
             # Appending to our aforementioned list
-            total_sum.append(value)
+            total_sum += value
 
         # If the total sum is not found to be empty
-        if total_sum != []:
+        if total_sum != 0:
 
             # Traverse through the keys in the query word
             # dictionary
@@ -430,7 +432,7 @@ class VectorSpaceModel():
                 
                 # Set each key to the normalized form of it's former
                 # value
-                query_words[key] = (value / np.linalg.norm(total_sum))
+                query_words[key] = (value / total_sum)
 
         # Setting the query_dist to 0, meant to
         # represnet |q|
@@ -711,7 +713,7 @@ class VectorSpaceModel():
 
         Raises:
             None: No exception
-        ''''
+        '''
 
         return {k: (v1 + v2) for (k, v1), (_, v2) in zip(df1.items(), df2.items())}
 
@@ -728,7 +730,7 @@ class VectorSpaceModel():
 
         Raises:
             None: No exception
-        ''''
+        '''
 
         return {k: (v1 * v2) for (k, v1), (_, v2) in zip(df1.items(), df2.items())}
 
@@ -746,7 +748,7 @@ class VectorSpaceModel():
 
         Raises:
             None: No exception
-        ''''
+        '''
         if operator == 'and':
             return self.ANDQuery(df1, df2)
         elif operator == 'or':
@@ -764,7 +766,7 @@ class VectorSpaceModel():
 
         Raises:
             None: No exception
-        ''''
+        '''
 
         # Make local, temporary dict
         __auto_df_dict = df_dict.copy()
@@ -823,7 +825,7 @@ class VectorSpaceModel():
 
         Raises:
             None: No exception
-        ''''
+        '''
 
         new_dict = dict(
             filter(lambda item: item[1] != 0 and item[1] >= alpha, dict_to_clean))

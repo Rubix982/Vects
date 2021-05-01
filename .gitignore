@@ -50,4 +50,3 @@ tmp_email/
 yarn.lock
 package-lock.json
 server/venv/
-server/dist/
