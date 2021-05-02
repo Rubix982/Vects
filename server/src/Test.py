@@ -1,23 +1,5 @@
-# Imports for the boolean model
-from BooleanRetrievalModel import BooleanRetrievalModel
-
-# Preprocessing Steps, for building the positional and inverted indexes
-from Preprocessing import IndexPreprocessing, Preprocessing, AuxPreprocessing
-
 # Vector Space Model, and sub components for tf, idf, and tf-idf
 from VectorSpaceModel import VectorSpaceModel, TermFrequencyIndexer, DocumentInverseFrequency, TFBindIDF
-
-# FOR BOOLEAN PROCESSING
-# # TOTAL WORDS GENERATION
-# preprocess = Preprocessing()
-# preprocess.data_load_and_save()
-
-# # INDEX PROCESSING
-# preprocess = IndexPreprocessing()
-# preprocess.process_data_through_pipelines()
-# preprocess.get_saved_normalized_words()
-
-# model = BooleanRetrievalModel()
 
 '''Gold standard queries as mentioned in ../data/ShortStories.txt'''
 gold_standard_queries = ['beard',
