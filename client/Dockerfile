@@ -6,6 +6,7 @@ WORKDIR /App
 
 # add `/app/node_modules/.bin` to $PATH
 ENV PATH /app/node_modules/.bin:$PATH
+ENV REACT_APP_API_ROUTE http://localhost:80
 
 # copy lock files to App
 COPY package.json /App/

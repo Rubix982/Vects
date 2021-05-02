@@ -14,28 +14,6 @@
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
 
-<!-- PROJECT LOGO -->
-<br />
-<p align="center">
-  <!-- <a href="https://github.com/Rubix982/Findex">
-    <img src="https://raw.githubusercontent.com/Rubix982/Findex/aaa7a0cc3aa983a065b53e0e190bb0e64d33ba4f/assets/img/2.png" alt="Logo">
-  </a> -->
-
-  <!-- <h3 align="center">Findex</h3>
-
-  <p align="center">
-    A boolean information retrieval model
-    <br />
-    <a href="https://github.com/Rubix982/Findex"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    ·
-    <a href="https://github.com/Rubix982/Findex/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/Rubix982/Findex/issues">Request Feature</a>
-  </p> -->
-</p>
-
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -45,9 +23,17 @@
 
 ## To Use
 
-Go int `server/src`, and run the `Test.py` file with `python3 Test.py`, it should run all the test cases given in the assignment.
+Go int `server`, and run the `src/Test.py` file with `python3 src/Test.py`, it should run all the test cases given in the assignment.
 
-<!-- See GUI [here](https://findex-ten.vercel.app/). -->
+## Commands
+
+### Pushing to heroku
+
+Git Substree command,
+
+```bash
+git subtree push --prefix server heroku master
+```
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->

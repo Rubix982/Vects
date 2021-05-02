@@ -35,13 +35,14 @@ app.add_middleware(
 )
 
 @app.get("/")
-def read_root():
+async def read_root() -> dict:
     return {"Hello": "World"}
 
-@app.get("/{query}")
-def get_query_results(query: str):
-    return VSM.ComplexQuery(query)
+@app.get("/query/{query}")
+async def get_query_results(query: str) -> dict:
+    results = VSM.ComplexQuery(query)
+    return {"results": results, "query": query}
 
 @app.get("/items/{item_id}")
-def read_item(item_id: int, q: Optional[str] = None):
+async def read_item(item_id: int, q: Optional[str] = None) -> dict:
     return {"item_id": item_id, "q": q}

@@ -20,6 +20,8 @@ import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
 
+require('dotenv').config();
+
 const useStyles = makeStyles((theme) => ({
     root: {
         flexGrow: 1,
@@ -44,25 +46,29 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Home({ children }) {
 
+    let data = {}
+    let renderData = []
     const inputQuery = React.useRef('');
     const [isQueriedReceived, setIsQueriedReceived] = React.useState(false);
 
     async function fetchData(query) {
-        // You can await here
-        await fetch(`http://localhost:80/request?query=${query}`, {
-            method: 'POST', // *GET, POST, PUT, DELETE, etc.
-            mode: 'cors', // no-cors, *cors, same-origin
-            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-            credentials: 'same-origin', // incl ude, *same-origin, omit
-            headers: {
-                'Content-Type': 'application/json'
-                // 'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            redirect: 'follow', // manual, *follow, error
-            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-        })
-            .then(response => response.json())
-            .then(data => { console.log(data); if (data !== {}) { setIsQueriedReceived(true); } })
+
+        data = await fetch(`${process.env.REACT_APP_API_ROUTE}/query/${query}`);
+
+        data = await data.json()
+
+        data = data['results']
+
+        for (var key in data) {
+            renderData.push({
+                key: key,
+                value: data[key]
+            })
+        }
+
+        console.log(renderData)
+
+        setIsQueriedReceived(true);
     }
 
     const classes = useStyles();
@@ -80,18 +86,6 @@ export default function Home({ children }) {
     const onSubmitQuery = () => {
         fetchData(inputQuery.current.value);
     };
-
-    function createData(name, calories, fat, carbs, protein) {
-        return { name, calories, fat, carbs, protein };
-    }
-
-    const rows = [
-        createData('Frozen yoghurt', 159, 6.0, 24, 4.0),
-        createData('Ice cream sandwich', 237, 9.0, 37, 4.3),
-        createData('Eclair', 262, 16.0, 24, 6.0),
-        createData('Cupcake', 305, 3.7, 67, 4.3),
-        createData('Gingerbread', 356, 16.0, 49, 3.9),
-    ];
 
     function createCheckmarkData(criteria, status) {
         return { criteria, status };
@@ -179,24 +173,26 @@ export default function Home({ children }) {
                             <TableHead>
                                 <TableRow>
                                     <TableCell>
-                                        Dessert (100g serving)
+                                        Document
                                     </TableCell>
                                     <TableCell align="left">
-                                        Calories
+                                        Ranking
                                     </TableCell>
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {rows.map((row) => (
-                                    <TableRow key={row.name}>
-                                        <TableCell component="th" scope="row">
-                                            {row.name}
-                                        </TableCell>
-                                        <TableCell align="left">
-                                            {row.calories}
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                {
+                                    renderData.map(dataToRender => (                                        
+                                        <TableRow key={dataToRender.key}>
+                                            <TableCell component="th" scope="row">
+                                                {dataToRender.key}
+                                            </TableCell>
+                                            <TableCell align="left">
+                                                {dataToRender.value}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                }
                             </TableBody>
                         </Table>
                     </TableContainer>
