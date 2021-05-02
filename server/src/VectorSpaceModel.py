@@ -1,6 +1,6 @@
 # AuxPreprocessing required to use the process pipeline for the
 # input queries
-from Preprocessing import AuxPreprocessing
+from src.Preprocessing import AuxPreprocessing
 
 # Pandas to handle dataframes
 import pandas as pd

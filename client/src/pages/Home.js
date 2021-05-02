@@ -19,11 +19,6 @@ import Paper from '@material-ui/core/Paper';
 import Divider from '@material-ui/core/Divider';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemText from '@material-ui/core/ListItemText';
-import Radio from '@material-ui/core/Radio';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormControl from '@material-ui/core/FormControl';
-import FormLabel from '@material-ui/core/FormLabel';
 
 const useStyles = makeStyles((theme) => ({
     root: {
@@ -104,12 +99,15 @@ export default function Home({ children }) {
 
     const checkmarks = [
         createCheckmarkData('Preprocessing', 'true'),
-        createCheckmarkData('Formation Of Inverted And Positonal Indexes', 'true'),
-        createCheckmarkData('Simple Boolean Queries', 'true'),
-        createCheckmarkData('Complex Boolean Queries', 'true'),
-        createCheckmarkData('Proximity Queries', 'true'),
+        createCheckmarkData('Formation Of Index', 'true'),
+        createCheckmarkData('Code Complexity', 'true'),
+        createCheckmarkData('Loading Indexes', 'true'),
+        createCheckmarkData('Vector Space Model', 'true'),
+        createCheckmarkData('Query Processing', 'true'),
+        createCheckmarkData('Code Clarity', 'true'),
         createCheckmarkData('GUI', 'true'),
-        createCheckmarkData('Easy To Read Code', 'true'),
+        createCheckmarkData('GUI is good looking - hopefully!', 'true'),
+        createCheckmarkData('Well Commented Code', 'true'),
     ];
 
     return (
@@ -164,31 +162,6 @@ export default function Home({ children }) {
                     <Button onClick={onSubmitQuery} variant="contained" size="large" color="primary" className={classes.buttonMargin}>
                         Query!
                     </Button>
-                    <div className={classes.buttonMargin}>
-                        <FormControl component="fieldset">
-                            <FormLabel component="legend">Query Type</FormLabel>
-                            <RadioGroup row aria-label="position" name="position" defaultValue="top">
-                                <FormControlLabel
-                                    value="Simple Boolean"
-                                    control={<Radio color="primary" />}
-                                    label="Boolean"
-                                    labelPlacement="end"
-                                />
-                                <FormControlLabel
-                                    value="Complex Boolean"
-                                    control={<Radio color="primary" />}
-                                    label="Boolean"
-                                    labelPlacement="end"
-                                />                                
-                                <FormControlLabel
-                                    value="Proximity Search"
-                                    control={<Radio color="primary" />}
-                                    label="Proximity"
-                                    labelPlacement="end"
-                                />
-                            </RadioGroup>
-                        </FormControl>
-                    </div>
                 </form>
             </div>
             <ListItem button>
